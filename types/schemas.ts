@@ -61,6 +61,7 @@ export interface AnswerSpec {
 
 export interface VocabNote {
   term_en: string;
+  term_vi: string;
   part_of_speech?: string;
   definition_vi: string;
   register?: string;

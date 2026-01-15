@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { SATMathSolutionOutput } from '@/types/schemas';
 import SolutionViewer from '@/components/SolutionViewer';
 import LoadingState from '@/components/LoadingState';
@@ -174,6 +175,7 @@ export default function Home() {
             {imagePreview && (
               <div className="mt-4 relative">
                 <div className="border border-gray-300 rounded-lg p-2 bg-gray-50">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={imagePreview}
                     alt="Preview"
