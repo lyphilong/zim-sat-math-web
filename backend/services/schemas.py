@@ -100,7 +100,7 @@ class VocabNote(BaseModel):
     definition_vi: str = Field(
         ..., description="Giải thích ý nghĩa bằng tiếng Việt, giọng học thuật dễ hiểu"
     )
-    register: Optional[str] = Field(
+    academic_register: Optional[str] = Field(
         None, description="Mức độ học thuật/chuyên ngành (vd: academic, everyday, test term)"
     )
     example_en: Optional[str] = Field(

@@ -1,0 +1,14 @@
+# Exclude backend directory - it should be deployed separately
+backend/
+
+# Exclude Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+

@@ -208,7 +208,7 @@ Bổ sung về trường localization (dịch đề & từ vựng):
         * `term_en`: từ/cụm từ tiếng Anh gốc.
         * `part_of_speech` (optional): loại từ (noun/verb/adj/phrase...).
         * `definition_vi`: giải thích ý nghĩa bằng tiếng Việt, rõ ràng, dễ hiểu.
-        * `register` (optional): mức độ học thuật/chuyên ngành (vd: academic, test term...).
+        * `academic_register` (optional): mức độ học thuật/chuyên ngành (vd: academic, test term...).
         * `example_en` (optional): một câu ví dụ tiếng Anh ngắn (nếu hữu ích).
         * `note_vi` (optional): ghi chú thêm, lưu ý bẫy nghĩa cho học sinh Việt.
 21. Chỉ chọn các từ/cụm từ thực sự liên quan đến ngữ cảnh toán học/SAT, KHÔNG liệt kê toàn bộ từ vựng cơ bản.
