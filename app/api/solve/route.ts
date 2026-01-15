@@ -13,12 +13,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get backend URL from environment variable or use default
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
+    // Get backend URL from environment variable
+    // BACKEND_URL must be set when using separate backend project
+    // Format: https://backend-app.vercel.app (without trailing slash)
+    const backendUrl = process.env.BACKEND_URL;
+    
+    if (!backendUrl) {
+      return NextResponse.json(
+        { error: 'BACKEND_URL environment variable is not set. Please configure it in Vercel settings.' },
+        { status: 500 }
+      );
+    }
     
     try {
-      // Call Python FastAPI backend
-      const response = await fetch(`${backendUrl}/solve`, {
+      // Call external backend
+      const apiUrl = `${backendUrl}/solve`;
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

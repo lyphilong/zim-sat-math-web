@@ -26,6 +26,10 @@ yarn-error.log*
 
 # local env files
 .env*.local
+.env
+**/.env
+backend/.env
+api/.env
 
 # vercel
 .vercel
@@ -34,5 +38,17 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-backend
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# backend (keep api/backend but ignore original backend folder if needed)
+# backend
 
