@@ -1,4 +1,7 @@
 {
+  "buildCommand": "",
+  "installCommand": "pip install -r requirements.txt",
+  "outputDirectory": "",
   "functions": {
     "*.py": {
       "runtime": "python3.9"

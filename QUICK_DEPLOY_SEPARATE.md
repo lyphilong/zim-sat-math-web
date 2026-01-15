@@ -7,12 +7,16 @@
 1. Vào https://vercel.com → **Add New Project**
 2. Import repo `zim-sat-math-web`
 3. **Project Name**: `zim-sat-math-backend` (hoặc tên bạn muốn)
-4. **Root Directory**: `./api` ⚠️ **QUAN TRỌNG**
-5. **Framework Preset**: **Other**
-6. **Build Command**: (để trống)
-7. **Output Directory**: (để trống)
-8. **Install Command**: `pip install -r requirements.txt`
+4. **Framework Preset**: Chọn **Other** (không phải Next.js) ⚠️ **QUAN TRỌNG**
+5. **Root Directory**: Sửa thành `api` (không phải `app/api`) ⚠️ **QUAN TRỌNG**
+6. **Build Command**: Xóa `npm run build`, để **trống**
+7. **Output Directory**: Xóa `public`, để **trống**
+8. **Install Command**: Sửa từ `npm install` thành `pip install -r requirements.txt` ⚠️ **QUAN TRỌNG**
 9. Click **Deploy**
+
+**⚠️ Lưu ý**: Vercel có thể auto-detect Next.js và set các giá trị mặc định. Bạn **phải sửa thủ công**:
+- Root Directory: `api` (không có `app/` ở đầu)
+- Install Command: `pip install -r requirements.txt` (không phải `npm install`)
 
 **Lưu ý**: Backend sẽ có URL như: `https://zim-sat-math-backend.vercel.app`
 
