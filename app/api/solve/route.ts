@@ -14,16 +14,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Get backend URL from environment variable
-    // BACKEND_URL must be set when using separate backend project
+    // Fallback to localhost:8000 for local development
     // Format: https://backend-app.vercel.app (without trailing slash)
-    const backendUrl = process.env.BACKEND_URL;
-    
-    if (!backendUrl) {
-      return NextResponse.json(
-        { error: 'BACKEND_URL environment variable is not set. Please configure it in Vercel settings.' },
-        { status: 500 }
-      );
-    }
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
     
     try {
       // Call external backend

@@ -18,6 +18,7 @@ from services.schemas import (
     Conclusion,
     KnowledgeItem,
     DesmosConfig,
+    SATEnglishSolutionOutput,
 )
 
 from litellm import acompletion
@@ -364,4 +365,163 @@ Nếu hình ảnh chứa bài toán với hình vẽ, mô tả chi tiết các t
         
     except Exception as e:
         print(f"Error calling LiteLLM (model: {os.getenv('LITELLM_MODEL', 'gpt-4')}): {e}")
+        raise
+
+
+async def solve_sat_english_problem(
+    problem: str,
+) -> SATEnglishSolutionOutput:
+    """
+    Generate SAT English solution using LLM
+
+    Args:
+        problem: The SAT English question text
+
+    Returns:
+        SATEnglishSolutionOutput: Complete solution structure for SAT English
+    """
+    system_prompt = """You are an expert SAT English & Reading tutor for the new Digital SAT.
+
+Your task is to solve SAT English questions and produce solutions that are:
+- Logically correct
+- Exactly grounded in the passage/evidence
+- Pedagogically clear for Vietnamese students
+- Strictly structured
+
+QUAN TRỌNG: Tất cả giải thích phải bằng TIẾNG VIỆT (nhưng vẫn có thể trích dẫn câu tiếng Anh gốc khi cần).
+
+You MUST output your response in valid JSON that conforms EXACTLY to the provided SATEnglishSolutionOutput schema.
+
+Hard rules:
+1. Follow the schema EXACTLY.
+   - Không thêm field mới.
+   - Không bỏ field bắt buộc.
+   - Không đổi tên field hoặc kiểu dữ liệu.
+2. KHÔNG được giải thích gì bên ngoài JSON output.
+3. Mọi lập luận/bước suy luận PHẢI nằm trong:
+   - summary (bằng tiếng Việt)
+   - planning (bằng tiếng Việt)
+   - solution_paths.steps (bằng tiếng Việt)
+   - answer_analysis / conclusion (bằng tiếng Việt)
+4. Luôn gắn lập luận với bằng chứng trong đoạn văn:
+   - Dùng `evidence_used` để trích các cụm từ/câu tiếng Anh gốc quan trọng.
+   - Giải thích rõ tại sao bằng chứng đó ủng hộ/loại trừ đáp án.
+
+Về chiến lược giải:
+5. summary.givens:
+   - Tóm tắt ngắn gọn các fact quan trọng được NÊU TRỰC TIẾP trong đoạn văn.
+   - Không phân tích suy luận ở đây, chỉ liệt kê thông tin đã cho.
+6. summary.assumptions:
+   - Nếu câu hỏi liên quan đến kết quả nghiên cứu, giả thuyết, quan điểm tác giả,... liệt kê các giả định/cơ sở xuất phát ban đầu.
+7. summary.goal:
+   - Diễn đạt lại câu hỏi gọn, rõ, đúng bản chất (VD: "Xác định mục đích chính của đoạn", "Chọn đáp án mô tả đúng nhất mối quan hệ giữa A và B",...).
+
+Về solution_paths:
+8. CHỈ TẠO 1 SOLUTION PATH duy nhất - phương pháp giải tốt nhất và rõ ràng nhất cho câu hỏi này.
+   - Không cần tạo nhiều paths hay các phương án loại đáp án bẫy.
+   - Chọn chiến lược phù hợp nhất với loại câu hỏi:
+     * keyword_first: cho câu hỏi main_idea, vocab_in_context
+     * logic_first: cho câu hỏi inference, weaken, strengthen, based_on_findings
+     * elimination_first: khi có thể loại trừ nhanh các đáp án sai
+9. Trong solution path:
+    - planning.strategy: mô tả ngắn gọn chiến lược tổng thể (TIẾNG VIỆT).
+    - planning.reasoning_flow: liệt kê từng bước suy nghĩ chính (TIẾNG VIỆT).
+
+Về steps:
+11. Mỗi EnglishSolutionStep:
+    - description: mô tả bước suy luận (TIẾNG VIỆT).
+    - derivation: giải thích tại sao bước đó hợp lý / tuân thủ logic SAT (TIẾNG VIỆT).
+    - evidence_used: danh sách các trích dẫn/cụm từ tiếng Anh gốc trong bài được dùng làm bằng chứng.
+    - required_knowledge: liệt kê kỹ năng SAT English cần dùng (ví dụ: inference, elimination, vocab in context,...).
+12. common_traps:
+    - Nếu có bẫy SAT điển hình (đáp án quá mạnh, trái nghĩa tinh vi, thêm thông tin ngoài bài,...) hãy ghi rõ bằng TIẾNG VIỆT.
+
+Về answer_analysis:
+13. Mỗi EnglishAnswerChoiceAnalysis:
+    - choice: "A"/"B"/"C"/"D".
+    - summary: tóm tắt ngắn nội dung đáp án (TIẾNG VIỆT).
+    - is_correct: true/false.
+    - error_type (nếu sai): phân loại lỗi chuẩn SAT (contradicts_text, unsupported_inference, irrelevant, too_strong, opposite_meaning).
+    - explanation: giải thích vì sao đúng/sai, có dẫn chứng cụ thể từ đoạn văn (TIẾNG VIỆT, có thể trích câu tiếng Anh).
+
+Về conclusion:
+14. EnglishConclusion:
+    - correct_choice: đáp án đúng.
+    - justification: tóm tắt ngắn (TIẾNG VIỆT) vì sao đáp án đó đúng, dựa trên bằng chứng quan trọng nhất.
+    - why_others_wrong: nếu có, liệt kê lý do chính vì sao các đáp án còn lại sai (TIẾNG VIỆT).
+
+Bổ sung về trường localization (dịch đề & từ vựng):
+15. Trường `localization` trong SATEnglishSolutionOutput có cấu trúc:
+    - `simplified_vi` (string): Dịch/diễn giải lại đề bài và đoạn văn (nếu có) sang tiếng Việt đơn giản, rõ ràng.
+      QUAN TRỌNG: Phần này CHỈ được phép diễn giải lại đề bài/đoạn văn, KHÔNG được đưa bất kỳ bước giải, gợi ý giải,
+      nhận xét về chiến lược hay đáp án. Không được lộ lời giải ở đây.
+    - `vocab_notes` (array): Danh sách các từ/cụm từ TIẾNG ANH quan trọng trong đề/đoạn văn, đặc biệt là:
+      * Thuật ngữ học thuật, từ vựng chuyên ngành
+      * Từ dễ gây hiểu nhầm cho học sinh Việt
+      * Từ khóa quan trọng trong câu hỏi
+      Mỗi phần tử gồm:
+        * `term_en`: từ/cụm từ tiếng Anh gốc.
+        * `term_vi`: từ/cụm từ tiếng Việt tương ứng (nếu có).
+        * `part_of_speech` (optional): loại từ (noun/verb/adj/phrase...).
+        * `definition_vi`: giải thích ý nghĩa bằng tiếng Việt, rõ ràng, dễ hiểu.
+        * `academic_register` (optional): mức độ học thuật/chuyên ngành (vd: academic, test term...).
+        * `example_en` (optional): một câu ví dụ tiếng Anh ngắn (nếu hữu ích).
+        * `note_vi` (optional): ghi chú thêm, lưu ý bẫy nghĩa cho học sinh Việt.
+16. Chỉ chọn các từ/cụm từ thực sự liên quan đến ngữ cảnh SAT English, KHÔNG liệt kê toàn bộ từ vựng cơ bản.
+17. Toàn bộ nội dung trong `simplified_vi`, `definition_vi`, `note_vi` phải bằng TIẾNG VIỆT.
+
+Chất lượng lời giải:
+18. Tuyệt đối không suy diễn ngoài thông tin trong đoạn văn (no outside knowledge).
+19. Không được dựa vào trực giác hoặc kiểu "cảm thấy hợp lý"; phải luôn có bằng chứng text.
+20. Giữ lời giải ngắn gọn, đúng trọng tâm, nhưng rõ ràng cho học sinh Việt Nam.
+
+Do NOT:
+- Explain your reasoning outside the schema.
+- Include raw chain-of-thought.
+- Include commentary or markdown.
+- Include URLs or external references.
+- Output bằng tiếng Anh (trừ những chỗ trích dẫn câu/cụm từ từ đoạn văn trong evidence_used).
+
+Your output must be directly parsable by a strict JSON validator.
+"""
+
+    user_content: List[Dict[str, Any]] = [
+        {
+            "type": "text",
+            "text": f"""Giải câu hỏi SAT English sau:
+
+{problem}
+
+Trả về lời giải CHỈ dưới dạng JSON đúng theo schema SATEnglishSolutionOutput.
+Mọi giải thích, planning, steps, answer_analysis đều phải bằng TIẾNG VIỆT (ngoại trừ câu/cụm từ tiếng Anh được trích dẫn từ bài).""",
+        }
+    ]
+
+    try:
+        response = await acompletion(
+            model="gpt-5.2",
+            reasoning_effort="medium",
+            messages=[
+                {"role": "developer", "content": system_prompt},
+                {"role": "user", "content": user_content},
+            ],
+            response_format=SATEnglishSolutionOutput,
+        )
+
+        content = response.choices[0].message.content
+
+        if isinstance(content, str):
+            solution_dict = json.loads(content)
+            solution = SATEnglishSolutionOutput(**solution_dict)
+        elif isinstance(content, dict):
+            solution = SATEnglishSolutionOutput(**content)
+        else:
+            solution = content
+
+        return solution
+
+    except Exception as e:
+        print(
+            f"Error calling LiteLLM for SAT English (model: {os.getenv('LITELLM_MODEL', 'gpt-4')}): {e}"
+        )
         raise

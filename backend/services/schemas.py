@@ -240,3 +240,218 @@ class SATMathSolutionOutput(BaseModel):
             "hiểu sâu ngôn ngữ học thuật trong bối cảnh SAT."
         ),
     )
+
+
+    # sat_english_schema.py
+# ==================================================
+# SAT ENGLISH SOLUTION SCHEMA
+# Compatible with SATMathSolutionOutput architecture
+# ==================================================
+
+from pydantic import BaseModel, Field
+from typing import List, Optional, Literal
+
+
+# ==================================================
+# 1. KNOWLEDGE UNIT (SAT English–oriented)
+# ==================================================
+
+class EnglishKnowledgeItem(BaseModel):
+    skill: str = Field(
+        ..., description="Kỹ năng cụ thể (Inference, Elimination, Keyword tracking, etc.)"
+    )
+    category: Literal[
+        "Reading Comprehension",
+        "Logical Reasoning",
+        "Rhetorical Skills",
+        "Grammar & Usage",
+        "Test Strategy"
+    ] = Field(
+        ..., description="Nhóm kỹ năng theo SAT English"
+    )
+
+
+# ==================================================
+# 2. SAT ENGLISH METADATA
+# ==================================================
+
+class SATEnglishMeta(BaseModel):
+    question_type: Literal[
+        "main_idea",
+        "based_on_findings",
+        "inference",
+        "weaken",
+        "strengthen",
+        "dual_text",
+        "vocab_in_context",
+        "grammar"
+    ] = Field(..., description="Dạng câu hỏi SAT English")
+
+    text_type: Optional[Literal[
+        "science",
+        "history",
+        "literature",
+        "social_science"
+    ]] = Field(
+        None, description="Loại văn bản (nếu xác định được)"
+    )
+
+    difficulty_band: Optional[Literal[
+        "easy",
+        "medium",
+        "hard"
+    ]] = Field(
+        None, description="Độ khó ước lượng"
+    )
+
+
+# ==================================================
+# 3. SUMMARY (givens, assumptions, goal)
+# ==================================================
+
+class EnglishSummary(BaseModel):
+    givens: List[str] = Field(
+        ..., description="Thông tin được nêu trực tiếp trong đoạn văn"
+    )
+    assumptions: Optional[List[str]] = Field(
+        None, description="Giả định ban đầu của tác giả/giới nghiên cứu (nếu có)"
+    )
+    goal: str = Field(
+        ..., description="Câu hỏi thực sự đang yêu cầu người làm xác định điều gì"
+    )
+    required_knowledge: List[EnglishKnowledgeItem]
+
+
+# ==================================================
+# 4. PLANNING (reasoning plan)
+# ==================================================
+
+class EnglishPlanning(BaseModel):
+    strategy: str = Field(
+        ..., description="Chiến lược tổng quát (keyword-first, eliminate-first, etc.)"
+    )
+    reasoning_flow: List[str] = Field(
+        ..., description="Luồng suy luận logic (assumption → evidence → conclusion)"
+    )
+    sat_tips: Optional[List[str]] = Field(
+        None, description="Mẹo SAT áp dụng cho hướng giải này"
+    )
+
+
+# ==================================================
+# 5. SOLUTION STEP (logical step)
+# ==================================================
+
+class EnglishSolutionStep(BaseModel):
+    step_id: int = Field(..., description="Thứ tự bước lập luận")
+    description: str = Field(
+        ..., description="Nội dung bước suy luận"
+    )
+    derivation: str = Field(
+        ..., description="Vì sao bước này hợp logic"
+    )
+    evidence_used: List[str] = Field(
+        ..., description="Từ/cụm từ trong bài được dùng làm bằng chứng"
+    )
+    required_knowledge: List[EnglishKnowledgeItem]
+
+    common_traps: Optional[List[str]] = Field(
+        None, description="Bẫy SAT thường gặp ở bước này"
+    )
+
+
+# ==================================================
+# 6. ANSWER CHOICE ANALYSIS (MCQ)
+# ==================================================
+
+class EnglishAnswerChoiceAnalysis(BaseModel):
+    choice: Literal["A", "B", "C", "D"]
+    summary: str = Field(
+        ..., description="Tóm tắt ngắn nội dung đáp án"
+    )
+    is_correct: bool = Field(
+        ..., description="Đáp án đúng hay sai"
+    )
+    error_type: Optional[Literal[
+        "contradicts_text",
+        "unsupported_inference",
+        "irrelevant",
+        "too_strong",
+        "opposite_meaning"
+    ]] = Field(
+        None, description="Nếu sai: loại lỗi SAT chuẩn"
+    )
+    explanation: str = Field(
+        ..., description="Giải thích logic vì sao đáp án đúng hoặc sai"
+    )
+
+
+# ==================================================
+# 7. CONCLUSION
+# ==================================================
+
+class EnglishConclusion(BaseModel):
+    correct_choice: Literal["A", "B", "C", "D"]
+    justification: str = Field(
+        ..., description="Giải thích ngắn gọn vì sao đáp án này đúng"
+    )
+    why_others_wrong: Optional[List[str]] = Field(
+        None, description="Vì sao các đáp án còn lại sai"
+    )
+
+
+# ==================================================
+# 8. SOLUTION PATH (one approach)
+# ==================================================
+
+class EnglishSolutionPath(BaseModel):
+    path_id: str = Field(..., description="ID của hướng giải")
+    approach_type: Literal[
+        "keyword_first",
+        "logic_first",
+        "elimination_first",
+        "exam_trick"
+    ] = Field(
+        ..., description="Loại chiến lược giải"
+    )
+    title: str = Field(
+        ..., description="Tên ngắn gọn của hướng giải"
+    )
+
+    planning: EnglishPlanning
+    steps: List[EnglishSolutionStep]
+    answer_analysis: List[EnglishAnswerChoiceAnalysis]
+    conclusion: EnglishConclusion
+
+    required_knowledge: List[EnglishKnowledgeItem]
+
+    pros: Optional[str] = Field(
+        None, description="Ưu điểm của hướng giải"
+    )
+    cons: Optional[str] = Field(
+        None, description="Nhược điểm của hướng giải"
+    )
+    best_when: Optional[str] = Field(
+        None, description="Khi nào nên dùng hướng này trong SAT"
+    )
+
+
+# ==================================================
+# 9. TOP-LEVEL OUTPUT
+# ==================================================
+
+class SATEnglishSolutionOutput(BaseModel):
+    sat_meta: SATEnglishMeta
+    summary: EnglishSummary
+    solution_paths: List[EnglishSolutionPath]
+    recommended_path_id: Optional[str] = Field(
+        None, description="ID của hướng giải được khuyến nghị"
+    )
+    # Ngữ nghĩa & từ vựng cho học sinh Việt Nam
+    localization: Optional[ProblemLocalization] = Field(
+        None,
+        description=(
+            "Dịch nghĩa đề bài và ghi chú từ vựng tiếng Anh quan trọng, giúp học sinh "
+            "hiểu sâu ngôn ngữ học thuật trong bối cảnh SAT English."
+        ),
+    )

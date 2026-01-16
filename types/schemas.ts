@@ -138,3 +138,111 @@ export interface SATMathSolutionOutput {
   localization?: ProblemLocalization;
 }
 
+// =========================
+// SAT ENGLISH SCHEMAS
+// =========================
+
+export type EnglishKnowledgeCategory =
+  | 'Reading Comprehension'
+  | 'Logical Reasoning'
+  | 'Rhetorical Skills'
+  | 'Grammar & Usage'
+  | 'Test Strategy';
+
+export interface EnglishKnowledgeItem {
+  skill: string;
+  category: EnglishKnowledgeCategory;
+}
+
+export type SATEnglishQuestionType =
+  | 'main_idea'
+  | 'based_on_findings'
+  | 'inference'
+  | 'weaken'
+  | 'strengthen'
+  | 'dual_text'
+  | 'vocab_in_context'
+  | 'grammar';
+
+export type SATEnglishTextType =
+  | 'science'
+  | 'history'
+  | 'literature'
+  | 'social_science';
+
+export interface SATEnglishMeta {
+  question_type: SATEnglishQuestionType;
+  text_type?: SATEnglishTextType;
+  difficulty_band?: DifficultyBand;
+}
+
+export interface EnglishSummary {
+  givens: string[];
+  assumptions?: string[];
+  goal: string;
+  required_knowledge: EnglishKnowledgeItem[];
+}
+
+export interface EnglishPlanning {
+  strategy: string;
+  reasoning_flow: string[];
+  sat_tips?: string[];
+}
+
+export interface EnglishSolutionStep {
+  step_id: number;
+  description: string;
+  derivation: string;
+  evidence_used: string[];
+  required_knowledge: EnglishKnowledgeItem[];
+  common_traps?: string[];
+}
+
+export type EnglishErrorType =
+  | 'contradicts_text'
+  | 'unsupported_inference'
+  | 'irrelevant'
+  | 'too_strong'
+  | 'opposite_meaning';
+
+export interface EnglishAnswerChoiceAnalysis {
+  choice: CorrectChoice;
+  summary: string;
+  is_correct: boolean;
+  error_type?: EnglishErrorType | null;
+  explanation: string;
+}
+
+export interface EnglishConclusion {
+  correct_choice: CorrectChoice;
+  justification: string;
+  why_others_wrong?: string[];
+}
+
+export type EnglishApproachType =
+  | 'keyword_first'
+  | 'logic_first'
+  | 'elimination_first'
+  | 'exam_trick';
+
+export interface EnglishSolutionPath {
+  path_id: string;
+  approach_type: EnglishApproachType;
+  title: string;
+  planning: EnglishPlanning;
+  steps: EnglishSolutionStep[];
+  answer_analysis: EnglishAnswerChoiceAnalysis[];
+  conclusion: EnglishConclusion;
+  required_knowledge: EnglishKnowledgeItem[];
+  pros?: string;
+  cons?: string;
+  best_when?: string;
+}
+
+export interface SATEnglishSolutionOutput {
+  sat_meta: SATEnglishMeta;
+  summary: EnglishSummary;
+  solution_paths: EnglishSolutionPath[];
+  recommended_path_id?: string;
+  localization?: ProblemLocalization;
+}
